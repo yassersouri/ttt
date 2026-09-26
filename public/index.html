@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Table Tennis Tournament</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="ball">🏓</span>
+      <div>
+        <h1 id="tournamentTitle">Table Tennis Tournament</h1>
+        <p class="sub">Round robin groups → single elimination knockout</p>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab" data-tab="setup">Setup</button>
+      <button class="tab" data-tab="groups">Group stage</button>
+      <button class="tab" data-tab="knockout">Knockout</button>
+    </nav>
+    <div class="topactions">
+      <button class="btn ghost" id="exportBtn" title="Download tournament as JSON">Export</button>
+      <button class="btn ghost" id="importBtn" title="Load tournament from JSON">Import</button>
+      <button class="btn danger ghost" id="resetBtn">Reset</button>
+      <input type="file" id="importFile" accept="application/json" hidden />
+    </div>
+  </header>
+
+  <main id="view"></main>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h2 id="modalTitle">Match</h2>
+        <button class="icon-btn" id="modalClose" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-foot">
+        <button class="btn ghost danger" id="modalClear">Clear scores</button>
+        <button class="btn" id="modalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
