@@ -332,3 +332,76 @@ td.num.neg { color: var(--danger); }
 .sched-head .resting {
   font-size: 11px; color: var(--muted); opacity: .85; font-style: italic;
 }
+
+.section-title .spacer { flex: 1; }
+
+/* ---------- printable group sheets ---------- */
+#printArea { display: none; }
+
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+
+  body { background: #fff !important; color: #000 !important; }
+  body > *:not(#printArea) { display: none !important; }
+  #printArea { display: block; font: 10.5pt/1.3 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: #000; }
+
+  .sheet { page-break-after: always; break-after: page; }
+  .sheet:last-child { page-break-after: auto; break-after: auto; }
+
+  .sheet header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px;
+  }
+  .sheet .t { font-size: 9pt; text-transform: uppercase; letter-spacing: .06em; color: #444; }
+  .sheet h1 { margin: 2px 0 0; font-size: 20pt; }
+  .sheet h1 span { font-size: 10pt; font-weight: 400; color: #444; }
+  .sheet .meta { display: flex; gap: 14px; font-size: 9pt; }
+  .sheet .line { display: inline-block; width: 34mm; border-bottom: 1px solid #000; margin-left: 4px; }
+  .sheet .line.short { width: 14mm; }
+
+  .sheet h2 { font-size: 11pt; margin: 12px 0 5px; }
+  .sheet h2 span { font-weight: 400; font-size: 8.5pt; color: #555; }
+
+  .sheet table { width: 100%; border-collapse: collapse; }
+  .sheet th, .sheet td { border: 1px solid #777; padding: 3px 5px; vertical-align: middle; }
+  .sheet th { color: #000; background: #eee; font-size: 8.5pt; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet tr { break-inside: avoid; page-break-inside: avoid; }
+
+  .sheet .no { width: 7mm; text-align: center; color: #555; }
+  .sheet .pl { white-space: nowrap; }
+  .sheet .vs { color: #777; font-size: 8pt; margin: 0 6px; }
+
+  .sched td { height: 8.5mm; }
+  .sched .rhead td {
+    height: auto; background: #f4f4f4; border-left: 0; border-right: 0;
+    font-size: 8.5pt; font-weight: 700; padding-top: 5px;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .sched .rhead span { font-weight: 400; font-style: italic; color: #555; }
+  .sched .setc { width: 21mm; text-align: center; white-space: nowrap; }
+  .sched .setc i { font-style: normal; margin: 0 2px; }
+  .sched .setc b { display: inline-block; min-width: 6mm; }
+  .sched .box { display: inline-block; width: 7mm; height: 5.5mm; border: 1px solid #999; vertical-align: middle; }
+  .sched .win { width: 30mm; }
+  .sched .ok { width: 8mm; text-align: center; }
+  .sched .tick { display: inline-block; width: 4mm; height: 4mm; border: 1px solid #999; }
+
+  .xtab td { height: 9mm; }
+  .xtab .gc { width: 13mm; text-align: center; font-size: 9pt; }
+  .xtab .self { background: #bbb; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .xtab .st { width: 13mm; text-align: center; }
+  .xtab .rank { font-weight: 700; }
+
+  .sheet .rules { margin-top: 8px; font-size: 8pt; color: #555; }
+  /* if a big group spills over, move the whole results grid rather than split it */
+  .sheet h2 { break-after: avoid; page-break-after: avoid; }
+  .sheet .xtab { break-inside: avoid; page-break-inside: avoid; }
+  .sheet thead { display: table-header-group; }
+
+  .sheet.compact { font-size: 9.5pt; }
+  .sheet.compact h2 { margin: 8px 0 4px; }
+  .sheet.compact .sched td { height: 6.6mm; padding: 1px 5px; }
+  .sheet.compact .sched .rhead td { padding-top: 2px; padding-bottom: 1px; }
+  .sheet.compact .sched .box { height: 4.6mm; }
+  .sheet.compact .xtab td { height: 7mm; }
+}

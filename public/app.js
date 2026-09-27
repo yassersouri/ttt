@@ -607,6 +607,11 @@ function renderGroups() {
       <h2>Group stage</h2>
       <span class="pill">Best of ${state.config.groupBestOf}</span>
       <span class="pill ${ready ? 'ok' : 'warn'}">${ready ? 'All matches played' : 'In progress'}</span>
+      <span class="spacer"></span>
+      <label class="row small muted print-opt" style="gap:6px" title="Otherwise the sheets are blank, ready to fill in by hand">
+        <input type="checkbox" id="printWithResults"> include recorded results
+      </label>
+      <button class="btn ghost small" id="printSheets" title="Print or save as PDF">🖨 Print score sheets</button>
     </div>
     <div class="grid cols-2">${cards}</div>
     <div class="row" style="margin-top:16px">
@@ -891,6 +896,7 @@ function wire() {
 
   // group stage
   $$('[data-gmatch]').forEach((el) => el.addEventListener('click', () => openGroupMatch(el.dataset.gmatch)));
+  bind('#printSheets', 'click', () => printGroupSheets($('#printWithResults').checked));
   bind('#goKnockout', 'click', () => {
     if (!state.bracket) {
       const b = generateBracket();
@@ -1162,6 +1168,121 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && modalCtx) closeModal();
   if (e.key === 'Enter' && modalCtx) $('#modalSave').click();
 });
+
+/* ------------------------------------------------------------ print sheets */
+
+/**
+ * Paper score sheets for the group stage, one group per page: the rotation
+ * schedule with a box per set, a results grid, and an empty standings block.
+ * The browser's print dialog handles "Save as PDF".
+ */
+function renderPrintSheets(withResults) {
+  const bestOf = state.config.groupBestOf;
+  const title = esc(state.title || 'Table Tennis Tournament');
+
+  return state.groups.map((g) => {
+    const ms = groupMatches(g);
+    const setCols = Array.from({ length: bestOf }, (_, i) => `<th class="setc">Set ${i + 1}</th>`).join('');
+
+    let lastRound = 0;
+    let n = 0;
+    const rows = ms.map((m) => {
+      const r = groupResult(m.id);
+      const sets = withResults ? getSets(state.scores, m.id) : [];
+      const showWinner = withResults && r.decided;
+      let head = '';
+      if (m.round !== lastRound) {
+        lastRound = m.round;
+        const playing = new Set(ms.filter((x) => x.round === m.round).flatMap((x) => [x.a, x.b]));
+        const resting = g.players.filter((p) => !playing.has(p.id)).map((p) => esc(p.name));
+        head = `<tr class="rhead"><td colspan="${bestOf + 4}">Round ${m.round}${resting.length ? ` <span>· ${resting.join(', ')} rest${resting.length === 1 ? 's' : ''}</span>` : ''}</td></tr>`;
+      }
+      n++;
+      const cells = Array.from({ length: bestOf }, (_, i) => {
+        const set = sets[i];
+        return `<td class="setc">${set ? `<b>${set[0]}</b><i>:</i><b>${set[1]}</b>` : '<span class="box"></span><i>:</i><span class="box"></span>'}</td>`;
+      }).join('');
+      const winner = showWinner ? esc(playerName(r.winner === 'a' ? m.a : m.b)) : '';
+      return `${head}<tr>
+        <td class="no">${n}</td>
+        <td class="pl">${esc(playerName(m.a))}<span class="vs">vs</span>${esc(playerName(m.b))}</td>
+        ${cells}
+        <td class="win">${winner}</td>
+        <td class="ok"><span class="tick"></span></td>
+      </tr>`;
+    }).join('');
+
+    // crosstable: each cell is the row player's result against the column player
+    const resultFor = (rowId, colId) => {
+      if (!withResults) return '';
+      const m = ms.find((x) => (x.a === rowId && x.b === colId) || (x.a === colId && x.b === rowId));
+      if (!m) return '';
+      const r = groupResult(m.id);
+      if (!r.decided) return '';
+      const rowIsA = m.a === rowId;
+      const won = (r.winner === 'a') === rowIsA;
+      const sets = getSets(state.scores, m.id);
+      const score = sets.length ? (rowIsA ? r.setsA + '–' + r.setsB : r.setsB + '–' + r.setsA) : '';
+      return `<b>${won ? 'W' : 'L'}</b> ${score}`;
+    };
+    const stand = withResults ? standings(g) : [];
+    const statFor = (id) => stand.find((row) => row.player.id === id);
+    const gridHead = g.players.map((p, i) => `<th class="gc" title="${esc(p.name)}">${i + 1}</th>`).join('');
+    const gridRows = g.players.map((p, i) => {
+      const st = statFor(p.id);
+      const cols = g.players.map((q) => q.id === p.id
+        ? '<td class="gc self"></td>'
+        : `<td class="gc">${resultFor(p.id, q.id)}</td>`).join('');
+      return `<tr>
+        <td class="no">${i + 1}</td>
+        <td class="pl">${esc(p.name)}</td>
+        ${cols}
+        <td class="st">${st ? st.s.wins : ''}</td>
+        <td class="st">${st ? st.s.setsW + '–' + st.s.setsL : ''}</td>
+        <td class="st">${st ? st.s.ptsW + '–' + st.s.ptsL : ''}</td>
+        <td class="st rank">${st && allGroupsComplete() ? st.rank : ''}</td>
+      </tr>`;
+    }).join('');
+
+    // big groups get tighter rows so the whole group still fits on one page
+    const density = ms.length > 15 ? ' compact' : '';
+    return `<section class="sheet${density}">
+      <header>
+        <div>
+          <div class="t">${title}</div>
+          <h1>${esc(g.name)} <span>· group stage · best of ${bestOf}</span></h1>
+        </div>
+        <div class="meta">
+          <div>Date <span class="line"></span></div>
+          <div>Table <span class="line short"></span></div>
+        </div>
+      </header>
+
+      <h2>Matches <span>— ${ms.length} in total, rotated so nobody plays twice in a row</span></h2>
+      <table class="sched">
+        <thead><tr><th class="no">#</th><th class="pl">Players</th>${setCols}<th class="win">Winner</th><th class="ok">✓</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+      <h2>Results grid <span>— row player's result vs. column player</span></h2>
+      <table class="xtab">
+        <thead><tr><th class="no">#</th><th class="pl">Player</th>${gridHead}<th class="st">Wins</th><th class="st">Sets</th><th class="st">Points</th><th class="st">Rank</th></tr></thead>
+        <tbody>${gridRows}</tbody>
+      </table>
+
+      <p class="rules">Ranking: most wins. Level on wins → head-to-head between those players, then sets won, then points won. A set is first to 11, win by 2.</p>
+    </section>`;
+  }).join('');
+}
+
+function printGroupSheets(withResults) {
+  if (!state.groups.some((g) => g.players.length >= 2)) {
+    toast('Add players to a group first.');
+    return;
+  }
+  $('#printArea').innerHTML = renderPrintSheets(withResults);
+  window.print();
+}
 
 /* ------------------------------------------------------- import / export /reset */
 

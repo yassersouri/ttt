@@ -40,6 +40,17 @@ method, so:
   (unavoidable only in groups of 3 or 4, where any two matches must share a player)
 * every pair still meets exactly once, over `n-1` rounds (or `n` rounds when `n` is odd)
 
+**Printing score sheets** — *🖨 Print score sheets* on the group stage tab opens the print
+dialog (choose *Save as PDF* for a file). You get one A4 page per group with:
+
+* every match in rotation order, a score box pair per set (matching the group best-of),
+  a winner column and a tick box
+* a results grid (players × players) with empty Wins / Sets / Points / Rank columns
+* space for the date and table number
+
+Sheets are blank by default for filling in by hand; tick *include recorded results* to print
+what's already been entered. Groups of up to 6 fit on one page; larger groups run to two.
+
 Click a match to enter set scores (add as many sets as the match needs). Standings update
 live:
 
